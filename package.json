@@ -1,0 +1,34 @@
+{
+  "name": "flow-mvp",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "start": "vite preview --host 0.0.0.0",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@tanstack/react-router": "^1.168.24",
+    "@tanstack/react-start": "^1.167.46",
+    "@tanstack/router-plugin": "^1.167.24",
+    "lucide-react": "^1.11.0",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.10",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^25.6.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "eslint": "^10.2.1",
+    "typescript-eslint": "^8.59.0",
+    "vitest": "^4.1.5"
+  }
+}
