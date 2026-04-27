@@ -14,6 +14,7 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SessionSessionIdRouteImport } from './routes/session.$sessionId'
+import { Route as ApiSnapshotRouteImport } from './routes/api/snapshot'
 import { Route as ApiRematchRouteImport } from './routes/api/rematch'
 import { Route as ApiOnboardingRouteImport } from './routes/api/onboarding'
 import { Route as ApiMatchesRouteImport } from './routes/api/matches'
@@ -44,6 +45,11 @@ const IndexRoute = IndexRouteImport.update({
 const SessionSessionIdRoute = SessionSessionIdRouteImport.update({
   id: '/session/$sessionId',
   path: '/session/$sessionId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiSnapshotRoute = ApiSnapshotRouteImport.update({
+  id: '/api/snapshot',
+  path: '/api/snapshot',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiRematchRoute = ApiRematchRouteImport.update({
@@ -87,6 +93,7 @@ export interface FileRoutesByFullPath {
   '/api/matches': typeof ApiMatchesRoute
   '/api/onboarding': typeof ApiOnboardingRoute
   '/api/rematch': typeof ApiRematchRoute
+  '/api/snapshot': typeof ApiSnapshotRoute
   '/session/$sessionId': typeof SessionSessionIdRoute
   '/api/rapid/webhook': typeof ApiRapidWebhookRoute
 }
@@ -100,6 +107,7 @@ export interface FileRoutesByTo {
   '/api/matches': typeof ApiMatchesRoute
   '/api/onboarding': typeof ApiOnboardingRoute
   '/api/rematch': typeof ApiRematchRoute
+  '/api/snapshot': typeof ApiSnapshotRoute
   '/session/$sessionId': typeof SessionSessionIdRoute
   '/api/rapid/webhook': typeof ApiRapidWebhookRoute
 }
@@ -114,6 +122,7 @@ export interface FileRoutesById {
   '/api/matches': typeof ApiMatchesRoute
   '/api/onboarding': typeof ApiOnboardingRoute
   '/api/rematch': typeof ApiRematchRoute
+  '/api/snapshot': typeof ApiSnapshotRoute
   '/session/$sessionId': typeof SessionSessionIdRoute
   '/api/rapid/webhook': typeof ApiRapidWebhookRoute
 }
@@ -129,6 +138,7 @@ export interface FileRouteTypes {
     | '/api/matches'
     | '/api/onboarding'
     | '/api/rematch'
+    | '/api/snapshot'
     | '/session/$sessionId'
     | '/api/rapid/webhook'
   fileRoutesByTo: FileRoutesByTo
@@ -142,6 +152,7 @@ export interface FileRouteTypes {
     | '/api/matches'
     | '/api/onboarding'
     | '/api/rematch'
+    | '/api/snapshot'
     | '/session/$sessionId'
     | '/api/rapid/webhook'
   id:
@@ -155,6 +166,7 @@ export interface FileRouteTypes {
     | '/api/matches'
     | '/api/onboarding'
     | '/api/rematch'
+    | '/api/snapshot'
     | '/session/$sessionId'
     | '/api/rapid/webhook'
   fileRoutesById: FileRoutesById
@@ -169,6 +181,7 @@ export interface RootRouteChildren {
   ApiMatchesRoute: typeof ApiMatchesRoute
   ApiOnboardingRoute: typeof ApiOnboardingRoute
   ApiRematchRoute: typeof ApiRematchRoute
+  ApiSnapshotRoute: typeof ApiSnapshotRoute
   SessionSessionIdRoute: typeof SessionSessionIdRoute
   ApiRapidWebhookRoute: typeof ApiRapidWebhookRoute
 }
@@ -208,6 +221,13 @@ declare module '@tanstack/react-router' {
       path: '/session/$sessionId'
       fullPath: '/session/$sessionId'
       preLoaderRoute: typeof SessionSessionIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/snapshot': {
+      id: '/api/snapshot'
+      path: '/api/snapshot'
+      fullPath: '/api/snapshot'
+      preLoaderRoute: typeof ApiSnapshotRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/rematch': {
@@ -265,6 +285,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiMatchesRoute: ApiMatchesRoute,
   ApiOnboardingRoute: ApiOnboardingRoute,
   ApiRematchRoute: ApiRematchRoute,
+  ApiSnapshotRoute: ApiSnapshotRoute,
   SessionSessionIdRoute: SessionSessionIdRoute,
   ApiRapidWebhookRoute: ApiRapidWebhookRoute,
 }

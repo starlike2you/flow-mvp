@@ -3,4 +3,5 @@ dist/
 .output/
 .env
 .env.local
+.flow-data/
 *.log

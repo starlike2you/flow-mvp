@@ -1,63 +1,72 @@
 import { Link, createFileRoute } from '@tanstack/react-router'
-import { getFlowSnapshot } from '../lib/data'
+import { useEffect, useState } from 'react'
+import type { FlowSnapshot } from '../lib/types'
 
 export const Route = createFileRoute('/')({
-  loader: () => getFlowSnapshot(),
-  component: LandingPage,
+  component: OperationsHome,
 })
 
-function LandingPage() {
-  const data = Route.useLoaderData()
-  const paidMembers = data.payments.filter((payment) => payment.status === 'paid').length
+function OperationsHome() {
+  const [data, setData] = useState<FlowSnapshot | null>(null)
+
+  useEffect(() => {
+    fetch('/api/snapshot')
+      .then((response) => response.json())
+      .then((snapshot: FlowSnapshot) => setData(snapshot))
+  }, [])
+
+  const paidMembers = data?.payments.filter((payment) => payment.status === 'paid').length || 0
+  const scheduledSessions = data?.matches.filter((match) => match.status === 'scheduled').length || 0
 
   return (
-    <main className="page">
-      <section className="hero">
-        <div className="stack">
-          <span className="eyebrow">Flow 1기 모집</span>
-          <h1>영어를 배우는 대신, 영어로 대화하는 환경.</h1>
+    <main className="page stack">
+      <section className="grid two">
+        <div className="card stack">
+          <span className="eyebrow">Flow MVP 운영 홈</span>
+          <h1>신청자 등록부터 세션 후 학습 자료까지 운영합니다.</h1>
           <p className="lede">
-            비슷한 실력의 파트너와 30분간 100% 영어로 대화하고, AI 선생님이 막히는
-            순간을 도와줍니다. 세션이 끝나면 내 대화 기반 학습 노트와 오디오북이
-            자동으로 만들어집니다.
+            이 화면은 랜딩이 아니라 운영 시작점입니다. 신청자를 등록하고, 운영자가 매칭하고,
+            세션에서 AI 도움과 학습 노트 생성을 실제 저장 데이터로 확인합니다.
           </p>
           <div className="cta-row">
-            <a className="button" href={import.meta.env.VITE_RAPID_APPLY_URL || '/onboarding'}>
-              보증금 결제하고 신청하기
-            </a>
-            <Link className="button secondary" to="/dashboard">
-              데모 둘러보기
+            <Link className="button" to="/admin">
+              운영자 매칭 열기
+            </Link>
+            <Link className="button secondary" to="/onboarding">
+              신청자 등록
+            </Link>
+            <Link className="button ghost" to="/dashboard">
+              사용자 화면
             </Link>
           </div>
         </div>
         <aside className="card stack">
-          <span className="status ready">MVP 운영 준비</span>
-          <h2>4주, 주 1회, 30분</h2>
-          <p>
-            1기는 운영자가 직접 레벨과 가능 시간대를 보고 매칭합니다. 외부 결제와 화상,
-            AI 연동은 환경변수만 연결하면 실제 서비스로 전환됩니다.
-          </p>
+          <span className="status ready">File-backed data store</span>
+          <h2>현재 운영 상태</h2>
           <div className="grid two">
             <div className="metric">
               <strong>{paidMembers}</strong>
               <p>paid applicants</p>
             </div>
             <div className="metric">
-              <strong>{data.matches.length}</strong>
-              <p>scheduled matches</p>
+              <strong>{scheduledSessions}</strong>
+              <p>scheduled sessions</p>
             </div>
           </div>
+          <p className="muted">
+            데이터는 로컬 `.flow-data/store.json`에 저장되어 새로고침과 서버 재시작 후에도 유지됩니다.
+          </p>
         </aside>
       </section>
 
       <section className="grid three">
         {[
-          ['1. 콘텐츠', '매주 월요일 운영팀이 큐레이션한 주제와 질문을 발송합니다.'],
-          ['2. 1:1 세션', 'Daily.co room에서 30분간 100% 영어 대화를 진행합니다.'],
-          ['3. AI 선생님', '막히는 순간 사이드 패널에서 표현, 문법, 발음 팁을 받습니다.'],
-          ['4. 학습 노트', '트랜스크립트 기반으로 핵심 표현과 피드백을 정리합니다.'],
-          ['5. 오디오북', '내 대화를 자연스러운 원어민 영어로 각색해 MP3로 제공합니다.'],
-          ['Privacy', '녹음 전 동의 모달과 30일 삭제 정책을 제품 화면에 명시합니다.'],
+          ['1. 신청자 등록', '온보딩 폼으로 레벨, 관심사, 가능 시간대를 저장합니다.'],
+          ['2. 운영자 매칭', '레벨과 가능 시간대가 맞는 두 명을 골라 세션을 생성합니다.'],
+          ['3. 세션 진행', '세션 화면에서 질문, Daily room URL, AI Teacher 패널을 사용합니다.'],
+          ['4. 학습 자료', '트랜스크립트를 넣으면 학습 노트와 오디오북 스크립트를 저장합니다.'],
+          ['5. 외부 연동', 'Daily/AI/TTS 키가 있으면 실제 서비스 호출로 전환됩니다.'],
+          ['Storage', 'MVP 운영 데이터는 파일 저장소에 유지됩니다.'],
         ].map(([title, body]) => (
           <article className="card" key={title}>
             <h3>{title}</h3>

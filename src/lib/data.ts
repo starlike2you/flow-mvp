@@ -1,3 +1,5 @@
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { dirname, join } from 'node:path'
 import { createAudiobookScript, synthesizeAudiobook } from './audiobook'
 import { createDailyRoom } from './daily'
 import { canMatchUsers } from './matching'
@@ -100,6 +102,14 @@ const aiMessages: AiMessage[] = []
 const studyNotes: StudyNote[] = []
 const audiobooks: Audiobook[] = []
 
+const dataFilePath = import.meta.env.SSR ? join(process.cwd(), '.flow-data', 'store.json') : ''
+
+if (import.meta.env.SSR) {
+  loadPersistedState()
+} else {
+  loadSeedState()
+}
+
 export function getFlowSnapshot(): FlowSnapshot {
   return {
     users,
@@ -113,6 +123,21 @@ export function getFlowSnapshot(): FlowSnapshot {
     studyNotes,
     audiobooks,
   }
+}
+
+export function resetFlowDataForTests() {
+  users.splice(0, users.length)
+  roles.splice(0, roles.length)
+  availability.splice(0, availability.length)
+  payments.splice(0, payments.length)
+  weeklyContents.splice(0, weeklyContents.length)
+  matches.splice(0, matches.length)
+  sessions.splice(0, sessions.length)
+  aiMessages.splice(0, aiMessages.length)
+  studyNotes.splice(0, studyNotes.length)
+  audiobooks.splice(0, audiobooks.length)
+  loadSeedState()
+  persistState()
 }
 
 export function upsertOnboarding(input: {
@@ -165,6 +190,7 @@ export function upsertOnboarding(input: {
     })),
   )
 
+  persistState()
   return user
 }
 
@@ -202,6 +228,7 @@ export async function createManualMatch(input: {
 
   matches.push(match)
   sessions.push(session)
+  persistState()
 
   await Promise.all(
     [userA, userB].map((user) =>
@@ -221,6 +248,7 @@ export function markMatchForRematch(matchId: string) {
   const match = matches.find((item) => item.id === matchId)
   if (!match) throw new Error('Match not found.')
   match.status = 'rematch_queue'
+  persistState()
   return match
 }
 
@@ -236,6 +264,7 @@ export function recordAiMessage(input: {
     ...input,
   }
   aiMessages.push(message)
+  persistState()
   return message
 }
 
@@ -259,6 +288,7 @@ export async function generateSessionArtifacts(sessionId: string, transcript: st
 
   studyNotes.push(note)
   audiobooks.push(audiobook)
+  persistState()
 
   return { note, audiobook }
 }
@@ -285,7 +315,116 @@ export function createUserFromRapid(input: { email: string; orderId: string; dep
     })
   }
 
+  persistState()
   return user
+}
+
+function loadPersistedState() {
+  if (!existsSync(dataFilePath)) {
+    loadSeedState()
+    persistState()
+    return
+  }
+
+  const persisted = JSON.parse(readFileSync(dataFilePath, 'utf8')) as FlowSnapshot
+  replaceArray(users, persisted.users)
+  replaceArray(roles, persisted.roles)
+  replaceArray(availability, persisted.availability)
+  replaceArray(payments, persisted.payments)
+  replaceArray(weeklyContents, persisted.weeklyContents)
+  replaceArray(matches, persisted.matches)
+  replaceArray(sessions, persisted.sessions)
+  replaceArray(aiMessages, persisted.aiMessages)
+  replaceArray(studyNotes, persisted.studyNotes)
+  replaceArray(audiobooks, persisted.audiobooks)
+}
+
+function loadSeedState() {
+  replaceArray(users, [
+    {
+      id: 'user-juyeon',
+      email: 'juyeon@example.com',
+      nickname: 'Juyeon',
+      level: 'intermediate',
+      interests: ['marketing', 'career', 'travel'],
+      intro: 'I want to speak in meetings without freezing.',
+      createdAt: now,
+    },
+    {
+      id: 'user-mina',
+      email: 'mina@example.com',
+      nickname: 'Mina',
+      level: 'intermediate',
+      interests: ['startup', 'movies', 'career'],
+      intro: 'I can read English well, but speaking is scary.',
+      createdAt: now,
+    },
+    {
+      id: 'user-admin',
+      email: 'admin@flow.test',
+      nickname: 'Flow Ops',
+      level: 'advanced',
+      interests: ['operations'],
+      intro: 'Flow 1기 operator account.',
+      createdAt: now,
+    },
+  ])
+  replaceArray(roles, [
+    { userId: 'user-juyeon', role: 'member' },
+    { userId: 'user-mina', role: 'member' },
+    { userId: 'user-admin', role: 'admin' },
+  ])
+  replaceArray(availability, [
+    { userId: 'user-juyeon', weekday: 1, startHour: 20, endHour: 23 },
+    { userId: 'user-juyeon', weekday: 3, startHour: 20, endHour: 22 },
+    { userId: 'user-mina', weekday: 1, startHour: 21, endHour: 23 },
+    { userId: 'user-mina', weekday: 4, startHour: 19, endHour: 22 },
+  ])
+  replaceArray(payments, [
+    {
+      id: 'pay-juyeon',
+      userId: 'user-juyeon',
+      rapidOrderId: 'rapid-seed-001',
+      status: 'paid',
+      depositAmount: 50000,
+    },
+    {
+      id: 'pay-mina',
+      userId: 'user-mina',
+      rapidOrderId: 'rapid-seed-002',
+      status: 'paid',
+      depositAmount: 50000,
+    },
+  ])
+  replaceArray(weeklyContents, [
+    {
+      id: 'week-1',
+      weekNo: 1,
+      title: 'Small Talk Without Fear',
+      contentMd:
+        'This week is about starting light conversations and keeping them moving with follow-up questions.',
+      questions: [
+        'What is one small habit that improved your week?',
+        'When do you feel most confident speaking English?',
+        'What kind of small talk feels natural to you?',
+      ],
+    },
+  ])
+  replaceArray(matches, [])
+  replaceArray(sessions, [])
+  replaceArray(aiMessages, [])
+  replaceArray(studyNotes, [])
+  replaceArray(audiobooks, [])
+}
+
+function persistState() {
+  if (!import.meta.env.SSR) return
+  mkdirSync(dirname(dataFilePath), { recursive: true })
+  writeFileSync(dataFilePath, JSON.stringify(getFlowSnapshot(), null, 2))
+}
+
+function replaceArray<T>(target: T[], source: T[]) {
+  target.splice(0, target.length, ...source)
 }
 
 function slugify(value: string) {
